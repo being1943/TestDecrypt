@@ -2,16 +2,17 @@ package com.ds.dso.license;
 
 import util.Util;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.KeyStore;
-import java.util.logging.Level;
+import java.security.PrivateKey;
 import java.util.logging.Logger;
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
+import java.util.logging.Level;
 
-public class SpinnerLicenceCheck {
+public class Main {
     public static void main(String[] args) {
         try {
             // Step 1: Read the existing encrypted file and decrypt its content
@@ -29,7 +30,7 @@ public class SpinnerLicenceCheck {
             System.out.println("Encrypted Modified Content: " + encryptedModifiedContent);
 
             // Step 4: Write the encrypted modified content to a new lic file
-            File newLicFile = new File(Util.getOutputFileDir(SpinnerLicenceCheck.class.getName()), "Spinner_R2022x_HU8.lic");
+            File newLicFile = new File(Util.getOutputFileDir(Main.class.getName()), "Spinner_R2022x_HU8.lic");
             try (FileOutputStream fos = new FileOutputStream(newLicFile)) {
                 byte[] encryptedBytes = EncryptDecryptMechanism.hexStringToByteArray(encryptedModifiedContent);
                 fos.write(encryptedBytes);
@@ -62,13 +63,13 @@ class EncryptDecryptMechanism {
 
         try {
             this.loggerObj.log(Level.INFO, "In function decryptKey");
-            ObjectInputStream inputStream = new ObjectInputStream(EncryptDecryptMechanism.class.getResourceAsStream("privateKey.key"));
+            ObjectInputStream inputStream = new ObjectInputStream(EncryptDecryptMechanism.class.getResourceAsStream("/privateKey.key"));
             Key privateKey = (Key) inputStream.readObject();
             inputStream.close();
             Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding"); // Ensure padding scheme matches
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
             byte[] original = cipher.doFinal(encrypted);
-            originalString = new String(original);
+            originalString = new String(original, StandardCharsets.UTF_8);
             this.loggerObj.log(Level.INFO, "originalString = " + originalString);
         } catch (Exception e) {
             this.loggerObj.log(Level.SEVERE, "Error in function decryptKey while decrypting content : ", e);
@@ -137,7 +138,7 @@ class EncryptDecryptMechanism {
         Key aesKey = this.getKeyFromStore();
 
         try {
-            Cipher cipher = Cipher.getInstance("AES");
+            Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
             byte[] raw = aesKey.getEncoded();
             SecretKeySpec skeySpec = new SecretKeySpec(raw, "AES");
             cipher.init(Cipher.ENCRYPT_MODE, skeySpec);
